@@ -10,7 +10,7 @@ This document is the **authoritative, living specification** of the architecture
 
 **02-rBOR** stands for:
 
-> **render → Bifurcate → Orchestrate → Render**
+> **recursive → Bifurcate → Orchestrate → Render**
 
 It describes how complexity should *flow* in a frontend system:
 
