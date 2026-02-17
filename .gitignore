@@ -1,0 +1,25 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.local
+
+# Personal documentation (not for distribution)
+_docs/
+
+# Reference code
+_reference
+
+# Generated output from CLI testing (not package source)
+domains/
+infrastructure/
+a-strangely-quiet.tsx
+propt.tsx
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~

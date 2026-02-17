@@ -1,300 +1,410 @@
-# 02-rBOR Architecture
+# 02-rBOR CLI
 
-**02-rBOR** is a Clean Architecture–inspired, containerized, hook-driven React architecture designed to keep frontend systems scalable, readable, and resistant to “mega-hook” and “god-component” decay.
+[![npm version](https://img.shields.io/npm/v/02-rbor.svg)](https://www.npmjs.com/package/02-rbor)
+[![CI](https://github.com/02-davinci-01/02-rbor/workflows/CI/badge.svg)](https://github.com/02-davinci-01/02-rbor/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-This document is the **authoritative, living specification** of the architecture.
+> **Scaffold Clean Architecture-inspired React features with dependency graph analysis**
 
----
+A CLI tool for building frontend applications following the **02-rBOR** architecture pattern. Generate domain-driven feature modules with proper layering, enforce architectural rules, and analyze dependency graphs.
 
-## What 02-rBOR Is
+## 📦 Installation
 
-**02-rBOR** stands for:
-
-> **render → Bifurcate → Orchestrate → Render**
-
-It describes how complexity should *flow* in a frontend system:
-
-1. **Render** a feature boundary
-2. **Bifurcate** into containers, components, hooks, and logic
-3. **Orchestrate** behavior and data via controller hooks
-4. **Render** again at the leaves using pure UI components
-
-> **Complexity fans out — it never piles up.**
-
----
-
-## Who This Architecture Is For
-
-02-rBOR is designed for developers who:
-
-- Want predictable, reviewable frontend structure
-- Care about long-term maintainability over short-term convenience
-- Prefer explicit boundaries over “smart” abstractions
-- Use React with hooks, React Query, and optionally Redux
-
-This architecture is **not** a framework or boilerplate.
-It is a **way of thinking and organizing code**.
-
----
-
-## Core Philosophy
-
-- Structure follows responsibility
-- Boundaries matter more than cleverness
-- Hooks orchestrate, they do not decide
-- Logic should survive outside React
-- Indirection is a cost — pay it only when it buys something real
-
-02-rBOR is:
-- Clean Architecture–inspired
-- Feature-container–based
-- Hook-first (but not hook-heavy)
-- Explicit about dependency direction
-
----
-
-## The Mental Model (Non-Negotiable)
-
-```
-Feature Entry (index.tsx)
-   ↓
-Feature Container (View / Layout)
-   ↓
-Controller Hooks (orchestration)
-   ↓
-Data Hooks (React Query / Redux)
-   ↓
-Pure Domain Logic
-   ↓
-Infrastructure (API, storage)
+```bash
+npm install -g 02-rbor
 ```
 
-**Dependencies only flow downward.  
-Upward imports are forbidden.**
+Or use with npx:
 
----
-
-## Feature Containerization
-
-Each feature is a **self-contained unit** with **one public entry point**.
-
-### Canonical Feature Structure
-
-```
-feature-name/
-├── index.tsx                ← ONLY public export
-├── FeatureView.tsx          ← Container / layout
-├── components/              ← Dumb UI components
-│   ├── Header.tsx
-│   ├── List.tsx
-│   └── EmptyState.tsx
-├── hooks/                   ← Feature-local hooks
-│   ├── useFeature.ts        ← Controller hook
-│   └── useFeatureActions.ts
-├── domain/                  ← Pure logic
-│   └── rules.ts
-├── api/                     ← Infrastructure
-│   └── service.ts
-├── types.ts
-└── constants.ts
+```bash
+npx 02-rbor domain auth
 ```
 
-### Rules
+## 🚀 Quick Start
 
-- ❌ No cross-feature imports
-- ❌ No shared logic leaking upward
-- ✅ Feature is portable and replaceable
+### 1. Initialize your project
 
----
+```bash
+rbor init
+```
 
-## Layer Responsibilities
+This creates a `.rborrc.json` configuration file with your project defaults.
 
-### 1. Feature Entry (`index.tsx`)
+### 2. Generate your first domain
 
-**Responsibility**
-- Declare the feature boundary
+```bash
+rbor domain user --http axios
+```
 
-**Rules**
-- ❌ No hooks
-- ❌ No logic
-- ❌ No side effects
-- ✅ One default export
+This generates a complete domain structure:
 
-> This file is the **public API** of the feature.
+```
+domains/user/
+├── index.tsx              # Barrel export (public API)
+├── components/
+│   └── User.tsx          # Main component
+├── hooks/
+│   ├── useUser.ts        # Controller hook
+│   ├── useUserData.ts    # Data hook (React Query)
+│   └── useUserAction.ts  # Action hook
+├── methods/
+│   └── user-logic.ts     # Pure domain logic
+├── services/
+│   ├── user-service.ts   # Domain service
+│   └── service-factory.ts
+├── schema/
+│   └── user-schema.ts    # Validation schema (zod)
+├── types/
+│   └── user-types.ts     # TypeScript types
+└── utils/
+    ├── constant/
+    │   └── user-endpoints.ts
+    └── helper/
+        └── generateURL.ts
+```
 
----
+### 3. Add endpoints
 
-### 2. Feature Container (View / Layout)
+```bash
+cd domains/user
+rbor endpoint users/:id
+rbor endpoint users/profile
+```
 
-**Responsibility**
-- Compose UI
-- Wire hooks to components
+### 4. Validate architecture
 
-**Rules**
-- ✅ Call controller hooks
-- ❌ No business rules
-- ❌ No heavy computation
+```bash
+rbor validate
+```
 
-> Containers orchestrate — they don’t decide.
+## 📚 Commands
 
----
+### `rbor init`
 
-### 3. Controller Hooks
+Initialize rBOR configuration in your project.
 
-**Responsibility**
-- Orchestrate data flow
-- Compose data hooks + domain logic
+```bash
+rbor init [options]
 
-**Rules**
-- ❌ No UI concerns (toasts, i18n, routing)
-- ❌ No side effects
-- ❌ No direct storage access
-- ✅ Thin and readable
+Options:
+  --http <client>               HTTP client (axios, fetch, ky)
+  --domains-path <path>         Path to domains folder
+  --infrastructure-path <path>  Path to infrastructure folder
+  --force                       Overwrite existing config
+```
 
-> Hooks coordinate — logic lives elsewhere.
+**Example:**
 
----
+```bash
+rbor init --http fetch --domains-path src/features
+```
 
-### 4. Data Hooks (State Layer)
+Creates `.rborrc.json`:
 
-Includes:
-- React Query (server state)
-- Redux (client/UI state only)
-
-**Rules**
-- Server state → React Query
-- Client/UI state → Redux
-- ❌ No formatting
-- ❌ No interpretation
-- ❌ No translations
-
----
-
-### 5. Domain Layer (Pure Logic)
-
-**Responsibility**
-- Business rules
-- Data transformation
-- Interpretation
-
-**Rules**
-- ✅ No React imports
-- ✅ No hooks
-- ✅ Fully testable
-- ❌ No side effects
-
-> If React isn’t required, React must not be imported.
-
----
-
-### 6. Infrastructure Layer
-
-Includes:
-- API services
-- Storage
-- External integrations
-
-**Rules**
-- No UI knowledge
-- No business logic
-- Replaceable without refactors
+```json
+{
+  "http": "fetch",
+  "domainsPath": "src/features",
+  "infrastructurePath": "infrastructure",
+  "schema": {
+    "library": "zod"
+  }
+}
+```
 
 ---
 
-## Allowed Hook Types (Strict)
+### `rbor domain <name>`
 
-1. **UI Hooks**
-   - `useToggle`, `useTabs`
-   - Local state only
+Generate a new domain with the full 02-rBOR structure.
 
-2. **Data Hooks**
-   - `useUserQuery`
-   - Fetch + return raw state
+```bash
+rbor domain <name> [options]
 
-3. **Controller Hooks**
-   - `useFeature`
-   - Compose hooks, expose UI-ready state
+Options:
+  --http <client>  HTTP client to use (axios, fetch, ky)
+```
 
-### Forbidden Patterns
+**Examples:**
 
-- ❌ Mega-hooks
-- ❌ Hooks with toasts
-- ❌ Hooks with i18n
-- ❌ Hooks validating auth
-- ❌ Hooks reaching into global state implicitly
+```bash
+# Use default from .rborrc.json
+rbor domain auth
+
+# Override with specific HTTP client
+rbor domain products --http ky
+```
+
+**What it generates:**
+
+- ✅ Component with TypeScript + JSX
+- ✅ Three-hook pattern (controller, data, action)
+- ✅ Service layer with HTTP client integration
+- ✅ Pure domain logic (methods)
+- ✅ Validation schemas (zod)
+- ✅ Type definitions
+- ✅ Utility functions and constants
+- ✅ Barrel export (index.tsx)
 
 ---
 
-## Error Handling Philosophy
+### `rbor endpoint <path>`
 
-- Hooks **return errors**
-- Containers/components **decide reactions**
+Add an API endpoint constant to an existing domain.
+
+```bash
+rbor endpoint <path>
+```
+
+**Examples:**
+
+```bash
+cd domains/auth
+rbor endpoint login
+rbor endpoint users/:id/profile
+```
+
+Appends to `utils/constant/<domain>-endpoints.ts`:
 
 ```ts
-useEffect(() => {
-  if (error) showToast(...)
-}, [error])
+export const AUTH_ENDPOINTS = {
+  login: '/login',
+  userProfile: '/users/:id/profile',
+};
 ```
 
 ---
 
-## Progressive Bifurcation Principle
+### `rbor list`
 
-> As complexity grows, split **downward**, never **sideways**.
+List all domains in your project with metadata.
 
-- Components split into smaller components
-- Hooks split into smaller hooks
-- Logic splits into pure functions
+```bash
+rbor list
+```
 
-No file should grow endlessly.
+**Output:**
 
----
+```
+📦 rBOR Domains
+   Path: domains/
 
-## 02-rBOR Review Checklist
+───────────────────────────────────────────────────────────
+   📁 auth
+      Files: 15  |  Endpoints: 3  |  Service: ✅  |  Schema: ✅
+      Folders: components, hooks, methods, services, types, utils
 
-Before approving code, ask:
-
-- [ ] Does this feature have a single public entry?
-- [ ] Are hooks orchestrating rather than deciding?
-- [ ] Is domain logic React-free?
-- [ ] Are side effects confined to components?
-- [ ] Do dependencies flow only downward?
-- [ ] Is complexity fanning out instead of piling up?
-
-If any answer is “no”, the design needs revisiting.
-
----
-
-## When It’s Acceptable to Bend 02-rBOR
-
-Rules may be relaxed **only if all are true**:
-
-- Feature is page-specific
-- No reuse expected
-- Tight deadline
-- Trade-off is explicitly acknowledged
-
-Otherwise, follow the architecture.
+   📁 user
+      Files: 12  |  Endpoints: 2  |  Service: ✅  |  Schema: ✅
+      Folders: components, hooks, methods, services, types, utils
+───────────────────────────────────────────────────────────
+   Total: 2 domain(s)
+```
 
 ---
 
-## Final Principle
+### `rbor validate`
 
-> **One entry.  
-Thin orchestration.  
-Pure logic.  
-Downward dependencies.  
-Complexity fans out.**
+Enforce 02-rBOR architectural rules across your codebase.
+
+```bash
+rbor validate [options]
+
+Options:
+  --strict  Treat warnings as errors
+```
+
+**What it checks:**
+
+- ❌ **No cross-domain imports** — Domains must not import from each other
+- ❌ **Downward-only dependencies** — Components can't import from hooks, hooks can't import from methods
+- ❌ **No React in methods layer** — Pure logic must be framework-free
+- ⚠️ **Barrel exports** — Every domain should have an index.tsx
+- ⚠️ **Circular dependencies** — Warns about import cycles
+
+**Example output:**
+
+```
+🔍 Validating rBOR architecture...
+   Domains path: domains/
+
+═══════════════════════════════════════════════════════════
+❌ [no-cross-domain-import] Cross-domain import: "auth" imports from "user"
+   File: domains/auth/services/auth-service.ts:5
+   Fix:  Move shared code to a shared/ or infrastructure/ layer
+
+⚠️  [barrel-export] Domain "products" is missing a barrel index file
+   File: domains/products
+   Fix:  Create an index.tsx that re-exports the domain's public API
+═══════════════════════════════════════════════════════════
+   1 error(s), 1 warning(s)
+```
 
 ---
 
-## Status
+### `rbor deps <path>`
 
-This document is a **living specification**.
+Analyze dependency graphs for files or directories.
 
-It will evolve as:
-- real-world friction reveals better boundaries
-- new patterns earn their place
-- old assumptions are proven wrong
+```bash
+rbor deps <path> [options]
 
-02-rBOR is not dogma — it is a disciplined starting point.
+Options:
+  -d, --direction <dir>    Analysis direction (forward, reverse)
+  -f, --format <fmt>       Output format (json, summary, tree, dot)
+  -o, --output <file>      Write output to file
+  --depth <n>              Maximum traversal depth
+  --include-external       Include npm packages
+  --include-tests          Include test files
+```
+
+**Examples:**
+
+```bash
+# Show what a file imports
+rbor deps src/App.tsx --format tree
+
+# Show what imports a file (reverse dependencies)
+rbor deps src/utils/api.ts -d reverse
+
+# Generate DOT graph for visualization
+rbor deps domains/auth --format dot -o auth-deps.dot
+dot -Tpng auth-deps.dot -o auth-deps.png
+```
+
+---
+
+## ⚙️ Configuration
+
+### `.rborrc.json`
+
+Project-level configuration file (created by `rbor init`):
+
+```json
+{
+  "http": "axios",
+  "domainsPath": "domains",
+  "infrastructurePath": "infrastructure",
+  "schema": {
+    "library": "zod"
+  }
+}
+```
+
+**Options:**
+
+- `http` — Default HTTP client for new domains (`axios`, `fetch`, `ky`)
+- `domainsPath` — Where to generate domain folders
+- `infrastructurePath` — Shared infrastructure directory
+- `schema.library` — Validation library for schemas (`zod`, `yup`, `none`)
+
+CLI flags always override config file values.
+
+---
+
+## 🏗️ Architecture Philosophy
+
+The **02-rBOR** architecture enforces:
+
+1. **Feature Containerization** — Each domain is self-contained with a single public entry point
+2. **Downward Dependencies** — Complexity flows down: Component → Hook → Method → Service → Infrastructure
+3. **Layer Separation** — React code stays in UI, business logic is framework-free
+4. **No Cross-Domain Imports** — Domains communicate through shared infrastructure, never directly
+
+See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full architectural specification.
+
+---
+
+## 🧪 Testing
+
+The package includes a comprehensive test suite:
+
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run test:ui       # Visual test UI
+npm run test:coverage # Coverage report
+```
+
+**Test coverage:**
+
+- ✅ 74 unit tests
+- ✅ Naming utilities (PascalCase, kebab-case conversions)
+- ✅ Import parser (regex-based AST-lite)
+- ✅ File categorizer (component, hook, service detection)
+- ✅ Graph builder and output formatters
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Setup
+
+```bash
+git clone https://github.com/02-davinci-01/02-rbor.git
+cd 02-rbor
+npm install
+npm run build
+npm link
+```
+
+Now `rbor` is available globally for testing.
+
+---
+
+## 📄 License
+
+MIT © [02-davinci-01](https://github.com/02-davinci-01)
+
+---
+
+## 🔗 Links
+
+- [GitHub Repository](https://github.com/02-davinci-01/02-rbor)
+- [Issue Tracker](https://github.com/02-davinci-01/02-rbor/issues)
+- [Architecture Specification](./docs/ARCHITECTURE.md)
+- [Changelog](./CHANGELOG.md)
+
+---
+
+## 💡 Examples
+
+### Generate a complete authentication feature
+
+```bash
+rbor domain auth --http axios
+cd domains/auth
+rbor endpoint auth/login
+rbor endpoint auth/logout
+rbor endpoint auth/refresh
+```
+
+### Set up a product catalog
+
+```bash
+rbor domain products --http fetch
+cd domains/products
+rbor endpoint products
+rbor endpoint products/:id
+rbor endpoint products/:id/reviews
+```
+
+### Analyze and validate
+
+```bash
+rbor validate                    # Check architecture rules
+rbor list                        # See all domains
+rbor deps domains/auth -f tree   # Visualize dependencies
+```
+
+---
+
+**Built with ❤️ for scalable React architectures**

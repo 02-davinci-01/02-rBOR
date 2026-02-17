@@ -1,0 +1,1 @@
+export { mainComponentTemplate } from './main';
