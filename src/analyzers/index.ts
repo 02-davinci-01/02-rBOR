@@ -23,5 +23,6 @@ export {
   formatAsSummary,
   formatAsTree,
   formatAsDot,
+  formatAsSvg,
   generateFileSummary,
 } from './output-formatters';

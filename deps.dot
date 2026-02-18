@@ -1,0 +1,40 @@
+digraph DependencyGraph {
+  rankdir=LR;
+  node [shape=box, style="filled,rounded", fontname="Segoe UI", fontsize=12, margin="0.2,0.15"];
+  edge [fontname="Segoe UI", fontsize=10];
+
+  // Nodes
+  "another-one.tsx" [label="another-one.tsx", fillcolor="#4FC3F7"];
+  "domains/checking/components/Checking.tsx" [label="domains/checking/components/Checking.tsx", fillcolor="#4FC3F7"];
+  "domains/accounts/components/AccountChecking.tsx" [label="domains/accounts/components/AccountChecking.tsx", fillcolor="#4FC3F7"];
+  "domains/accounts/pages/AccountsPage.tsx" [label="domains/accounts/pages/AccountsPage.tsx", fillcolor="#BA68C8"];
+  "domains/checking/hooks/random.tsx" [label="domains/checking/hooks/random.tsx", fillcolor="#4FC3F7"];
+  "domains/checking/layouts/CheckingLayout.tsx" [label="domains/checking/layouts/CheckingLayout.tsx", fillcolor="#4FC3F7"];
+  "domains/checking/pages/CheckingPage.tsx" [label="domains/checking/pages/CheckingPage.tsx", fillcolor="#BA68C8"];
+  "domains/dashboard/components/DashboardOverview.tsx" [label="domains/dashboard/components/DashboardOverview.tsx", fillcolor="#4FC3F7"];
+  "domains/dashboard/pages/DashboardPage.tsx" [label="domains/dashboard/pages/DashboardPage.tsx", fillcolor="#BA68C8"];
+  "domains/reports/components/ReportChecking.tsx" [label="domains/reports/components/ReportChecking.tsx", fillcolor="#4FC3F7"];
+  "domains/reports/pages/ReportsPage.tsx" [label="domains/reports/pages/ReportsPage.tsx", fillcolor="#BA68C8"];
+  "domains/settings/components/SettingsChecking.tsx" [label="domains/settings/components/SettingsChecking.tsx", fillcolor="#4FC3F7"];
+  "src/analyzers/yo.tsx" [label="src/analyzers/yo.tsx", fillcolor="#4FC3F7"];
+  "src/app/App.tsx" [label="src/app/App.tsx", fillcolor="#BA68C8"];
+  "src/layouts/MainLayout.tsx" [label="src/layouts/MainLayout.tsx", fillcolor="#4FC3F7"];
+  "src/pages/HomePage.tsx" [label="src/pages/HomePage.tsx", fillcolor="#BA68C8"];
+
+  // Edges
+  "domains/checking/components/Checking.tsx" -> "another-one.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/accounts/components/AccountChecking.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/accounts/pages/AccountsPage.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/checking/hooks/random.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/checking/layouts/CheckingLayout.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/checking/pages/CheckingPage.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/dashboard/components/DashboardOverview.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/dashboard/pages/DashboardPage.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/reports/components/ReportChecking.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/reports/pages/ReportsPage.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "domains/settings/components/SettingsChecking.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "src/analyzers/yo.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "src/app/App.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "src/layouts/MainLayout.tsx" [style=solid, color="#666666"];
+  "domains/checking/components/Checking.tsx" -> "src/pages/HomePage.tsx" [style=solid, color="#666666"];
+}

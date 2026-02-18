@@ -103,7 +103,7 @@ export const DEFAULT_ANALYSIS_OPTIONS: Required<Omit<AnalysisOptions, 'entry' | 
   aliases: {},
 };
 
-export type OutputFormat = 'json' | 'summary' | 'tree' | 'dot';
+export type OutputFormat = 'json' | 'summary' | 'tree' | 'dot' | 'svg';
 
 export interface DependencySummary {
   file: string;

@@ -72,12 +72,8 @@ function toEndpointKey(endpointPath: string): string {
   return endpointPath
     .replace(/^\//, '')
     .replace(/:/g, '')
-    .split(/[\/\-]/)
-    .map((part, index) => {
-      if (index === 0) return part.toLowerCase();
-      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-    })
-    .join('');
+    .replace(/[\/\-]/g, '_')
+    .toUpperCase();
 }
 
 function addEndpoint(endpointsFile: string, domainName: string, endpointPath: string): void {

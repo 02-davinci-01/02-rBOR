@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import * as readline from 'readline';
 import { generateDomain } from './commands/generate-domain';
 import { generateEndpoint } from './commands/generate-endpoint';
+import { generateConstant } from './commands/generate-constant';
 import { analyzeDeps, type AnalyzeDepsOptions } from './commands/analyze-deps';
 import { initProject, type InitOptions } from './commands/init';
 import { listDomains } from './commands/list-domains';
@@ -12,6 +14,55 @@ export type HttpClient = 'axios' | 'fetch' | 'ky';
 
 export interface DomainOptions {
   http?: HttpClient;
+}
+
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => {
+    rl.question(question, answer => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+async function interactiveDomain(): Promise<void> {
+  console.log('');
+  console.log('🚀 rBOR Domain Generator (Interactive Mode)');
+  console.log('───────────────────────────────────────────');
+  console.log('');
+
+  const name = await prompt('  Domain name (e.g. user-profile): ');
+  if (!name) {
+    console.error('❌ Domain name is required.');
+    process.exit(1);
+  }
+
+  console.log('');
+  console.log('  HTTP client options:');
+  console.log('    1) axios (default)');
+  console.log('    2) fetch');
+  console.log('    3) ky');
+  console.log('');
+  const httpChoice = await prompt('  Choose HTTP client [1/2/3]: ');
+
+  const httpMap: Record<string, HttpClient> = { '1': 'axios', '2': 'fetch', '3': 'ky' };
+  const httpClient: HttpClient = httpMap[httpChoice] || 'axios';
+
+  console.log('');
+  console.log(`  📋 Summary:`);
+  console.log(`     Domain:      ${name}`);
+  console.log(`     HTTP client: ${httpClient}`);
+  console.log('');
+
+  const confirm = await prompt('  Proceed? [Y/n]: ');
+  if (confirm.toLowerCase() === 'n') {
+    console.log('  Cancelled.');
+    process.exit(0);
+  }
+
+  console.log('');
+  generateDomain(name, { http: httpClient });
 }
 
 const program = new Command();
@@ -35,11 +86,15 @@ program
   });
 
 program
-  .command('domain <name>')
-  .description('Generate a new domain feature with rBOR structure')
+  .command('domain [name]')
+  .description('Generate a new domain feature with rBOR structure (interactive if no name given)')
   .option('--http <client>', 'HTTP client to use (axios, fetch, ky)', config?.http ?? 'axios')
-  .action((name: string, options: DomainOptions) => {
-    generateDomain(name, options);
+  .action(async (name: string | undefined, options: DomainOptions) => {
+    if (!name) {
+      await interactiveDomain();
+    } else {
+      generateDomain(name, options);
+    }
   });
 
 program
@@ -47,6 +102,13 @@ program
   .description('Add an endpoint to the current domain (run from inside domains/<domain>/)')
   .action((endpointPath: string) => {
     generateEndpoint(endpointPath);
+  });
+
+program
+  .command('constant <key=value>')
+  .description('Add a constant to the current domain (run from inside domains/<domain>/)')
+  .action((input: string) => {
+    generateConstant(input);
   });
 
 program
@@ -70,7 +132,7 @@ program
   .command('deps <path>')
   .description('Analyze dependencies of a file or directory')
   .option('-d, --direction <dir>', 'Analysis direction (forward, reverse)', 'forward')
-  .option('-f, --format <fmt>', 'Output format (json, summary, tree, dot)', 'summary')
+  .option('-f, --format <fmt>', 'Output format (json, summary, tree, dot, svg)', 'summary')
   .option('-o, --output <file>', 'Write output to file')
   .option('--depth <n>', 'Maximum depth to traverse', '10')
   .option('--include-external', 'Include external npm packages in traversal', false)
@@ -82,6 +144,15 @@ program
       ...options,
       depth: options.depth ? parseInt(String(options.depth), 10) : 10,
     });
+  });
+
+program
+  .command('davinci')
+  .description('Credits')
+  .action(() => {
+    console.log(
+      'rendered to reality by 02-davinci-01. Say hello: https://02-davinci-01.vercel.app'
+    );
   });
 
 program.parse(process.argv);

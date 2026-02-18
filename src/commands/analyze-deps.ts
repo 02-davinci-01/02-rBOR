@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildDependencyGraph, formatGraph } from '../analyzers';
+import { buildDependencyGraph, formatGraph, formatAsSvg } from '../analyzers';
 import type { AnalysisOptions, OutputFormat, GraphDirection } from '../types/dependency-graph';
 
 export interface AnalyzeDepsOptions {
@@ -59,7 +59,7 @@ function detectAliases(): Record<string, string> {
   }
 }
 
-export function analyzeDeps(targetPath: string, options: AnalyzeDepsOptions): void {
+export async function analyzeDeps(targetPath: string, options: AnalyzeDepsOptions): Promise<void> {
   console.log('🔍 Analyzing dependencies...');
   console.log(`   Target: ${targetPath}`);
   console.log(`   Direction: ${options.direction}`);
@@ -97,10 +97,15 @@ export function analyzeDeps(targetPath: string, options: AnalyzeDepsOptions): vo
     console.log(`   Found ${graph.stats.nodeCount} nodes, ${graph.stats.edgeCount} edges`);
     console.log('');
 
-    const output = formatGraph(graph, options.format, {
-      pretty: true,
-      maxDepth: options.depth ?? 3,
-    });
+    let output: string;
+    if (options.format === 'svg') {
+      output = await formatAsSvg(graph);
+    } else {
+      output = formatGraph(graph, options.format, {
+        pretty: true,
+        maxDepth: options.depth ?? 3,
+      });
+    }
 
     if (options.output) {
       const outputPath = path.resolve(process.cwd(), options.output);
