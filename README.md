@@ -311,7 +311,6 @@ The **02-rBOR** architecture enforces:
 3. **Layer Separation** — React code stays in UI, business logic is framework-free
 4. **No Cross-Domain Imports** — Domains communicate through shared infrastructure, never directly
 
-See [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) for the full architectural specification.
 
 ---
 
@@ -336,42 +335,13 @@ npm run test:coverage # Coverage report
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Setup
-
-```bash
-git clone https://github.com/02-davinci-01/02-rbor.git
-cd 02-rbor
-npm install
-npm run build
-npm link
-```
-
-Now `rbor` is available globally for testing.
-
----
-
-## 📄 License
-
-MIT © [02-davinci-01](https://github.com/02-davinci-01)
-
 ---
 
 ## 🔗 Links
 
 - [GitHub Repository](https://github.com/02-davinci-01/02-rbor)
 - [Issue Tracker](https://github.com/02-davinci-01/02-rbor/issues)
-- [Architecture Specification](./docs/ARCHITECTURE.md)
-- [Changelog](./CHANGELOG.md)
+
 
 ---
 
@@ -407,4 +377,4 @@ rbor deps domains/auth -f tree   # Visualize dependencies
 
 ---
 
-**Built with ❤️ for scalable React architectures**
+
