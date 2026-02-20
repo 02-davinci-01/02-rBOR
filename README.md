@@ -4,7 +4,7 @@
 [![CI](https://github.com/02-davinci-01/02-rbor/workflows/CI/badge.svg)](https://github.com/02-davinci-01/02-rbor/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-> **Scaffold Clean Architecture-inspired React features with dependency graph analysis**
+> **recusrive Branching Orchestration Rendering**
 
 A CLI tool for building frontend applications following the **02-rBOR** architecture pattern. Generate domain-driven feature modules with proper layering, enforce architectural rules, and analyze dependency graphs — with SVG visualization out of the box.
 
