@@ -25,6 +25,7 @@ function getConfigTypeName(httpClient: HttpClient): string {
 
 export function domainServiceTemplate(name: string, httpClient: HttpClient = 'axios'): string {
   const pascalName = toPascalCase(name);
+  const upperName = name.replace(/[- ]/g, '_').toUpperCase();
   const configImport = getConfigImport(httpClient);
   const configType = getConfigTypeName(httpClient);
 
@@ -38,6 +39,7 @@ export function domainServiceTemplate(name: string, httpClient: HttpClient = 'ax
 ${configImport}
 ${baseServiceImport}
 import { generateUrl, type UrlParams, type QueryParams } from '../../../infrastructure/generateURL';
+import { ServiceFactory } from '../../../infrastructure/ServiceFactory';
 
 export class ${pascalName}Service extends BaseService {
   /**
@@ -94,5 +96,8 @@ export class ${pascalName}Service extends BaseService {
     return super.delete<T>(url, config);
   }
 }
+
+// Self-register with ServiceFactory (side-effect)
+ServiceFactory.register('${upperName}', () => new ${pascalName}Service());
 `;
 }

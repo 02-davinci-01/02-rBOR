@@ -49,8 +49,24 @@ describe('file-categorizer', () => {
     });
 
     it('categorizes hook files', () => {
-      expect(categorizeInternalFile('src/hooks/useAuth.ts')).toBe('hook');
+      expect(categorizeInternalFile('src/hooks/useAuth.ts')).toBe('hook-controller');
       expect(categorizeInternalFile('src/useLocalStorage.ts')).toBe('hook');
+    });
+
+    it('categorizes hook-data files', () => {
+      expect(categorizeInternalFile('src/hooks/useAuthData.ts')).toBe('hook-data');
+      expect(categorizeInternalFile('domains/user/hooks/useUserData.ts')).toBe('hook-data');
+    });
+
+    it('categorizes hook-action files', () => {
+      expect(categorizeInternalFile('src/hooks/useAuthAction.ts')).toBe('hook-action');
+      expect(categorizeInternalFile('domains/user/hooks/useUserAction.ts')).toBe('hook-action');
+      expect(categorizeInternalFile('src/hooks/useUserMutation.ts')).toBe('hook-action');
+    });
+
+    it('categorizes controller hooks (bare use<Domain> in hooks/)', () => {
+      expect(categorizeInternalFile('domains/cluster/hooks/useCluster.ts')).toBe('hook-controller');
+      expect(categorizeInternalFile('src/hooks/useAuth.ts')).toBe('hook-controller');
     });
 
     it('categorizes service files', () => {

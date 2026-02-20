@@ -1,66 +1,44 @@
-import { toPascalCase } from '../../utils/naming';
-
-export function serviceFactoryTemplate(domainName: string, servicePath: string): string {
-  const pascalName = toPascalCase(domainName);
-  const upperName = domainName.replace(/-/g, '').toUpperCase();
-
-  return `// Domain Service Imports
-import { ${pascalName}Service } from '${servicePath}';
-
-// Type Imports
-import type { BaseService } from './BaseService';
+export function serviceFactoryTemplate(): string {
+  return `import type { BaseService } from './BaseService';
 
 /**
- * Supported service types - auto-updated when new domains are created
+ * ServiceFactory — Registry-based factory for domain services.
+ *
+ * Services register themselves via ServiceFactory.register() at the bottom
+ * of their own file. This keeps infrastructure independent — it never imports
+ * domain code. The dependency flows downward (service → infrastructure),
+ * not upward.
+ *
+ * Usage in a controller hook:
+ *   import '../services/clause-service';   // triggers self-registration
+ *   const service = ServiceFactory.create('CLAUSE');
  */
-type ServiceType = "${upperName}";
+export type ServiceCreator = () => BaseService;
 
-/**
- * ServiceFactory - Creates service instances per domain
- */
 export class ServiceFactory {
-  /**
-   * ${pascalName} Service
-   */
-  static create(type: "${upperName}"): ${pascalName}Service;
+  private static registry = new Map<string, ServiceCreator>();
 
   /**
-   * Implementation
+   * Register a service creator under a domain key.
+   * Called once per domain service file (side-effect at module scope).
    */
-  static create(type: ServiceType): BaseService {
-    return this.createService(type);
+  static register(type: string, creator: ServiceCreator): void {
+    this.registry.set(type, creator);
   }
 
-  private static createService(type: ServiceType): BaseService {
-    switch (type) {
-      case "${upperName}":
-        return new ${pascalName}Service();
-
-      default:
-        throw new Error(\`Unknown service type: \${type}\`);
+  /**
+   * Create a service instance by domain key.
+   */
+  static create(type: string): BaseService {
+    const creator = this.registry.get(type);
+    if (!creator) {
+      throw new Error(
+        \`Unknown service type: "\${type}". \` +
+        \`Make sure the domain service file is imported before calling create().\`
+      );
     }
+    return creator();
   }
 }
 `;
-}
-
-export function getServiceImport(domainName: string, servicePath: string): string {
-  const pascalName = toPascalCase(domainName);
-  return `import { ${pascalName}Service } from '${servicePath}';`;
-}
-
-export function getServiceOverload(domainName: string): string {
-  const pascalName = toPascalCase(domainName);
-  const upperName = domainName.replace(/-/g, '').toUpperCase();
-  return `  /**
-   * ${pascalName} Service
-   */
-  static create(type: "${upperName}"): ${pascalName}Service;`;
-}
-
-export function getServiceCase(domainName: string): string {
-  const pascalName = toPascalCase(domainName);
-  const upperName = domainName.replace(/-/g, '').toUpperCase();
-  return `      case "${upperName}":
-        return new ${pascalName}Service();`;
 }

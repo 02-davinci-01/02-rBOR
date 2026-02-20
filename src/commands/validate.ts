@@ -19,20 +19,54 @@ export interface ValidateOptions {
   strict?: boolean;
 }
 
+/**
+ * Layer order for the rBOR downward-dependency rule.
+ *
+ * Control flows UPWARD (higher layers orchestrate lower layers):
+ *   page/component -> hook-data/hook-action -> hook-controller -> method -> service -> infrastructure
+ *
+ * Dependencies flow DOWNWARD (lower layers are independent):
+ *   infrastructure is independent
+ *   service depends on infrastructure
+ *   method depends on service
+ *   hook-controller depends on method
+ *   hook-data / hook-action depend on hook-controller
+ *   component depends on hooks
+ *   page depends on component
+ *
+ * Types, schemas, constants, utils, and config are "layer 0" — importable by anyone.
+ */
 const LAYER_ORDER: Record<string, number> = {
-  page: 0,
-  component: 1,
-  hook: 2,
+  type: 0,
+  schema: 0,
+  constant: 0,
+  config: 0,
+  util: 0,
+  infrastructure: 1,
+  service: 2,
   method: 3,
-  schema: 3,
-  service: 4,
-  util: 5,
-  constant: 5,
-  config: 5,
-  type: 6,
+  'hook-controller': 4,
+  hook: 4, // generic hook treated same as controller
+  'hook-data': 5,
+  'hook-action': 5,
+  component: 6,
+  page: 7,
 };
 
-const UNRESTRICTED_CATEGORIES = new Set(['type', 'constant', 'config', 'unknown']);
+const UNRESTRICTED_CATEGORIES = new Set([
+  'type',
+  'schema',
+  'constant',
+  'config',
+  'util',
+  'unknown',
+]);
+
+/** Categories at the same layer that must remain independent (no sibling imports). */
+const SIBLING_ISOLATION = new Map<string, Set<string>>([
+  ['hook-data', new Set(['hook-action'])],
+  ['hook-action', new Set(['hook-data'])],
+]);
 
 function checkCrossDomainImports(
   edges: DependencyEdge[],
@@ -101,15 +135,28 @@ function checkDownwardDependencies(
 
     if (sourceLevel === undefined || targetLevel === undefined) continue;
 
-    // Violation: importing from a higher layer (lower number = higher)
-    if (targetLevel < sourceLevel) {
+    // Violation: importing from a higher layer (higher number = higher layer)
+    if (targetLevel > sourceLevel) {
       violations.push({
         rule: 'downward-only-deps',
         severity: 'error',
         message: `Upward dependency: ${sourceCategory} ("${sourceNode.label}") imports ${targetCategory} ("${targetNode.label}")`,
         file: edge.source,
         line: edge.line,
-        suggestion: `Dependencies should only flow downward: component -> hook -> method -> service -> infrastructure.`,
+        suggestion: `Dependencies should only flow downward: page -> component -> hook-data/hook-action -> hook-controller -> method -> service -> infrastructure.`,
+      });
+    }
+
+    // Violation: sibling isolation (e.g. hook-data must not import hook-action)
+    const isolated = SIBLING_ISOLATION.get(sourceCategory);
+    if (isolated && isolated.has(targetCategory)) {
+      violations.push({
+        rule: 'downward-only-deps',
+        severity: 'error',
+        message: `Sibling dependency: ${sourceCategory} ("${sourceNode.label}") imports ${targetCategory} ("${targetNode.label}")`,
+        file: edge.source,
+        line: edge.line,
+        suggestion: `${sourceCategory} and ${targetCategory} must be independent siblings. Both may depend on the controller hook, but not on each other.`,
       });
     }
   }

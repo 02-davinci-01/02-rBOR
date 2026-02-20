@@ -4,12 +4,7 @@ export { kyBaseServiceTemplate } from './base-service-ky';
 
 export { domainServiceTemplate } from './domain-service';
 
-export {
-  serviceFactoryTemplate,
-  getServiceImport,
-  getServiceOverload,
-  getServiceCase,
-} from './service-factory';
+export { serviceFactoryTemplate } from './service-factory';
 
 export { baseServiceTemplate } from './base-service';
 

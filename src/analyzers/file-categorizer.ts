@@ -154,6 +154,11 @@ export function categorizeInternalFile(filePath: string): InternalFileCategory {
     return 'constant';
   }
 
+  // Infrastructure (must be checked before component to avoid PascalCase false positives)
+  if (normalized.includes('/infrastructure/') || normalized.includes('/infra/')) {
+    return 'infrastructure';
+  }
+
   // Pages / Routes
   if (
     normalized.includes('/pages/') ||
@@ -175,12 +180,31 @@ export function categorizeInternalFile(filePath: string): InternalFileCategory {
     return 'component';
   }
 
-  // Hooks
+  // Hooks — detect subtypes by naming convention:
+  //   use<Domain>Data  → hook-data
+  //   use<Domain>Action → hook-action
+  //   use<Domain>       → hook-controller (the main controller hook)
+  //   anything else in hooks/ → generic hook
   if (
     normalized.includes('/hooks/') ||
     normalized.includes('/hook/') ||
     basename.startsWith('use')
   ) {
+    if (basename.endsWith('data')) return 'hook-data';
+    if (
+      basename.endsWith('action') ||
+      basename.endsWith('actions') ||
+      basename.endsWith('mutation') ||
+      basename.endsWith('mutations')
+    )
+      return 'hook-action';
+    // A bare use<Domain> file in hooks/ is the controller hook
+    if (
+      (normalized.includes('/hooks/') || normalized.includes('/hook/')) &&
+      /^use[a-z]+$/.test(basename) // e.g. usecluster (already lowercased)
+    ) {
+      return 'hook-controller';
+    }
     return 'hook';
   }
 

@@ -16,6 +16,7 @@ export function controllerHookTemplate(name: string): string {
 
 import { ServiceFactory } from '../../../infrastructure/ServiceFactory';
 import type { ${pascalName}Service } from '../services/${kebabName}-service';
+import '../services/${kebabName}-service'; // triggers service self-registration
 import {
   get${pascalName}List,
   get${pascalName}ById,

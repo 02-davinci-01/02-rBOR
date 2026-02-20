@@ -26,7 +26,7 @@ import {
   toTypesFile,
   toUtilsFiles,
 } from './naming';
-import { findBaseService, getRelativeImportPath } from './file-finder';
+import { findBaseService } from './file-finder';
 import { ensureDependency } from './dependency-installer';
 import { findServiceFactory, updateServiceFactory } from './service-factory-updater';
 import type { HttpClient } from '../cli';
@@ -109,9 +109,8 @@ export function ensureServiceFactory(input: string, serviceFilePath: string): vo
   } else {
     const infraDir = path.join(process.cwd(), 'infrastructure');
     const newFactoryPath = path.join(infraDir, 'ServiceFactory.ts');
-    const relativePath = getRelativeImportPath(newFactoryPath, serviceFilePath);
 
-    fs.writeFileSync(newFactoryPath, serviceFactoryTemplate(input, relativePath));
+    fs.writeFileSync(newFactoryPath, serviceFactoryTemplate());
     console.log(`  🏭 Created infrastructure/ServiceFactory.ts`);
   }
 }
