@@ -17,12 +17,37 @@ The idea: a `user` feature shouldn't scatter its files across 6 different top-le
 Each domain follows a strict **downward dependency rule** inspired by the [Dependency Inversion Principle](https://en.wikipedia.org/wiki/Dependency_inversion_principle):
 
 ```
-Page  →  Component  →  Hook (data/action)  →  Hook (controller)  →  Method  →  Service  →  Infrastructure
- (route)     (UI)        (React Query)          (wiring)            (logic)     (HTTP)       (shared base)
+  ┌─────────────────────────────┐
+  │  Page (route)               │  composes components
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Component (UI)             │  renders data from hooks
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Hook — data / action       │  React Query fetching & mutations
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Hook — controller          │  creates service, wires methods
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Method (pure logic)        │  receives service as 1st param
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Service (HTTP layer)       │  extends BaseService
+  └──────────────┬──────────────┘
+                 ▼
+  ┌─────────────────────────────┐
+  │  Infrastructure (shared)    │  BaseService, ServiceFactory
+  └─────────────────────────────┘
 ```
 
-**control flows upward** — each layer orchestrates the layer below it.  
-**dependencies flow downward** — lower layers are completely independent of what consumes them.
+**Control flows upward** — each layer orchestrates the layer below it.  
+**Dependencies flow downward** — lower layers are completely independent of what consumes them.
 
 This means:
 
@@ -44,21 +69,22 @@ npm install -g 02-rbor
 
 ```bash
 rbor init
-rbor domain auth
+rbor domain <domain-name>
 ```
 
 > **Tip:** If you prefer not to install globally, use `npx` — it works without any install:
 >
 > ```bash
-> npx 02-rbor domain auth
+> npx 02-rbor init
+> npx 02-rbor domain <domain-name>
 > ```
 >
 > All commands work with `npx 02-rbor <command>`, for example:
 >
 > ```bash
-> npx 02-rbor domain <domain-name>
+> npx 02-rbor domain user
 > npx 02-rbor validate
-> npx 02-rbor deps domains/auth -f svg
+> npx 02-rbor deps domains/user -f svg
 > ```
 
 ## 🚀 Quick Start
@@ -127,16 +153,38 @@ domains/user/
 #### How data flows
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌────────────┐     ┌─────────────┐     ┌──────────────────┐
-│  Component  │────▶│  Hook (data/     │────▶│  Hook            │────▶│   Method   │────▶│   Service   │────▶│  Infrastructure  │
-│  (User.tsx) │     │  action)         │     │  (controller)    │     │(user-logic)│     │(UserService)│     │  (BaseService)   │
-└─────────────┘     │ useUserData      │     │  useUser         │     └────────────┘     └─────────────┘     └──────────────────┘
-       UI           │ useUserAction    │     │  creates service │       pure logic          HTTP calls          axios instance
-     renders        └──────────────────┘     │  & wires methods │       receives           extends              interceptors
-      data            React Query              └──────────────────┘       service as         BaseService           base URL
-                      fetching &                      │                   1st param           ▲                    timeout
-                      mutations                       │                                      │
-                                                      └────── ServiceFactory.create() ───────┘
+  ┌──────────────────────────────┐
+  │  Component  (User.tsx)       │  UI — renders data
+  └──────────────┬───────────────┘
+                 │ uses hooks
+                 ▼
+  ┌──────────────────────────────┐
+  │  useUserData / useUserAction │  React Query — fetching & mutations
+  └──────────────┬───────────────┘
+                 │ consumes controller
+                 ▼
+  ┌──────────────────────────────┐
+  │  useUser  (controller hook)  │  creates service, wires methods
+  │                              │  ServiceFactory.create('USER')
+  └───────┬──────────────┬───────┘
+          │              │
+          ▼              ▼
+  ┌──────────────┐  ┌────────────────────┐
+  │  user-logic  │  │  ServiceFactory    │
+  │  (methods)   │  │  (infrastructure)  │
+  └──────┬───────┘  └────────────────────┘
+         │ calls service
+         ▼
+  ┌──────────────────────────────┐
+  │  UserService                 │  extends BaseService
+  │  self-registers with Factory │
+  └──────────────┬───────────────┘
+                 │
+                 ▼
+  ┌──────────────────────────────┐
+  │  BaseService                 │  axios instance, interceptors,
+  │  (infrastructure)            │  base URL, timeout
+  └──────────────────────────────┘
 ```
 
 **Dependency Inversion in practice:**
@@ -356,16 +404,30 @@ rbor deps <path> [options]
 
 #### Direction
 
+**`--direction forward`** (default) — "What does this file import?"
+
 ```
-  --direction forward (default)           --direction reverse
+          ┌──────────┐
+          │ App.tsx  │
+          │ (entry)  │
+          └────┬─────┘
+               │
+     ┌─────────┼──────────┐
+     ▼         ▼          ▼
+ router.ts  store.ts  utils.ts
+```
 
-  "What does this file import?"           "Who imports this file?"
+**`--direction reverse`** — "Who imports this file?"
 
-  ┌──────────┐                            ┌──────────┐
-  │ App.tsx  │── imports ──▶ router.ts    │ App.tsx  │◀── imported by ── Layout.tsx
-  │ (entry)  │── imports ──▶ store.ts     │ (entry)  │◀── imported by ── Main.tsx
-  │          │── imports ──▶ utils.ts     │          │◀── imported by ── test.tsx
-  └──────────┘                            └──────────┘
+```
+ Layout.tsx  Main.tsx  test.tsx
+     │         │          │
+     └─────────┼──────────┘
+               ▼
+          ┌──────────┐
+          │ App.tsx  │
+          │ (target) │
+          └──────────┘
 ```
 
 Use `forward` to understand what a file depends on. Use `reverse` to see a file's consumers — useful for gauging blast radius before a refactor.
@@ -460,12 +522,16 @@ SVG/DOT node colors:
 All formats detect and report circular imports. In SVG/DOT output they're visually highlighted:
 
 ```
-  Normal edge:                    Circular edge:
+  Normal edge:              Circular edge:
 
-  ┌────────┐                      ┌────────┐
-  │  A.ts  │───────────▶ B.ts    │  A.ts  │───⚠ circular──▶ B.ts
-  └────────┘                      └────────┘    (red edge)
-   (blue)                          (red border)
+  ┌────────┐                ┌────────┐
+  │  A.ts  │                │  A.ts  │ (red border)
+  └───┬────┘                └───┬────┘
+      │                         │
+      ▼                         ▼ ⚠ circular (red edge)
+  ┌────────┐                ┌────────┐
+  │  B.ts  │                │  B.ts  │ (red border)
+  └────────┘                └────────┘
 
   🔴 Red borders — nodes involved in a cycle
   🔴 Red edges   — the circular import itself, labeled "⚠ circular"
@@ -588,6 +654,10 @@ rbor endpoint auth/login
 rbor endpoint auth/logout
 rbor endpoint auth/refresh
 rbor constant session-timeout=1800000
+
+# Generate more domains
+rbor domain user
+rbor domain products --http ky
 
 # Analyze and validate
 rbor validate --strict
