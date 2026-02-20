@@ -1,6 +1,6 @@
 {
   "name": "02-rbor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool for scaffolding opinionated, Clean Architecture-inspired React frontends with dependency graph analysis",
   "bin": {
     "rbor": "./bin/rbor.js"
